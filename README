@@ -1,0 +1,99 @@
+Netctl bundle package
+=====================
+
+This is an umbrella project to join together all netctl based projects
+with only purpose to make deployments on target or automation test
+system easy.
+
+Current list of subprojects that are part of this superproject:
+---------------------------------------------------------------
+
+  o netctl-base - Base filesystem layout for all netctl projects and
+                  install system written in POSIX-compatible shell. Used
+                  by every netctl based project.
+                  https://github.com/serhepopovych/netctl-base
+
+  o libnctl     - Set of helper libraries written in bash which is used
+                  accross the netctl project.
+                  https://github.com/serhepopovych/libnctl
+
+  o libreconf   - Additional library used by re* subprojects (e.g.
+                  reipset, reiptables and retc). Written in bash and uses
+                  libnctl helper routines.
+                  https://github.com/serhepopovych/libreconf
+
+  o libusrxml   - XML-like structured data to describe subscriber settings
+                  like IPv4 and IPv6 address, network interface, traffic
+                  control (tc) policies, etc.
+                  https://github.com/serhepopovych/libusrxml
+
+  o netconf     - Network management system. Basically wrapper on top of
+                  iproute2 package supporting thousands network 
+                  interfaces, routes, etc configurations in simple plain
+                  text format that is compatible with iproute2 utilities
+                  command line.
+                  https://github.com/serhepopovych/netconf
+
+  o reipset     - Wrapper binary to manage IP sets used by iptables. Can
+                  fetch configuration via rsync (including ssh tunneling),
+                  local configuration files in ipset(8) format delta
+                  updates.
+                  https://github.com/serhepopovych/reipset
+
+  o reiptables  - Wrapper binary to manage iptables/ip6tables firewall.
+                  Can load iptables-restore(8) compatible configuration
+                  fragments and load rules. Generic rules and conntrack
+                  tuning added. Requires specific version of iptables
+                  userspace and corresponding kernel space changes.
+                  https://github.com/serhepopovych/reiptables
+
+  o retc        - Wrapper binary to manage traffic control facilities (e.g.
+                  apply shaper rules using tc-htb(8) and tc-pfifo(8).
+                  Uses libusrxml parsed data, depends on reipset and
+                  reiptables.
+                  https://github.com/serhepopovych/retc
+
+To install projects system wide you might use following command sequence:
+-------------------------------------------------------------------------
+
+  $ cd /tmp
+  $ git clone --recursive https://github.com/serhepopovych/netctl
+  $ cd netctl
+  $ ./install.sh
+
+If everything does fine netctl will be installed to '/netctl' and system
+wide configuration files to '/etc' and other locations. Unprivileged
+user 'reconfigure' may also be created as part of libreconf subproject
+installation process.
+
+If you prefer to install netctl into different location and/or put
+system wide configuration files to non-root directory you may use DEST
+and ROOT environemnt variables to set netctl installation path and
+directory used for system wide configuration installations:
+
+  $ DEST='/tmp/netctl-dest' ROOT='/tmp/netctl-root' ./install.sh
+
+Subproject dependency schema:
+-----------------------------
+
+                          +-------------+
+                          | netctl-base |
+                          +------+------+
+                                 |
+          +----------------------+
+          |                      |
+    +-----+-----+          +-----+-----+         +----------+
+    | libusrxml |          |  libnctl  +---------+  netconf |
+    +-----+-----+          +-----+-----+         +----------+
+          |                      |
+          |                +-----+-----+
+          |                | libreconf |
+          |                +-----+-----+
+          |                      |
+    +-----+-----+          +-----+-----+
+    |    retc   +----------+  reipset  |
+    +-----------+          +-----+-----+
+                                 |
+                           +-----+-----+
+                           | reiptables|
+                           +-----------+
