@@ -1,0 +1,9 @@
+[submodule ".subprojects/retc"]
+	path = .subprojects/retc
+	url = https://github.com/serhepopovych/retc.git
+[submodule ".subprojects/reiptables"]
+	path = .subprojects/reiptables
+	url = https://github.com/serhepopovych/reiptables.git
+[submodule ".subprojects/netconf"]
+	path = .subprojects/netconf
+	url = https://github.com/serhepopovych/netconf.git

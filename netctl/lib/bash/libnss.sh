@@ -1,0 +1,1 @@
+../../../.subprojects/retc/netctl/lib/bash/libnss.sh

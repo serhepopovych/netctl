@@ -1,0 +1,1 @@
+../../../.subprojects/netconf/netctl/lib/bash/libnetconf.sh
