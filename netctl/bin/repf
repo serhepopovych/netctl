@@ -1,0 +1,75 @@
+#!/bin/bash
+
+# Re-exec itself as given user
+NCTL_RUNAS='reconfigure'
+
+# External tool dependencies, MUST always be defined,
+# even if empty (e.g.: declare -a crt1_request_tools_list=())
+declare -a crt1_request_tools_list=()
+
+# Source startup code
+. @dest@/netctl/lib/bash/crt1.sh
+
+# Source functions libraries
+. @dest@/netctl/lib/bash/librtti.sh
+. @dest@/netctl/lib/bash/liblog.sh
+. @dest@/netctl/lib/bash/libprocess.sh
+
+# Source reconfiguration library
+. @dest@/netctl/lib/bash/libreconf.sh
+
+################################################################################
+
+## If not specified in config, set this to default
+
+[ -x "$REIPSET" ] || REIPSET="$NCTL_PREFIX/bin/reipset"
+[ -x "$REIPTABLES" ] || REIPTABLES="$NCTL_PREFIX/bin/reiptables"
+[ -x "$RETC" ] || RETC="$NCTL_PREFIX/bin/retc"
+
+### DO NOT EDIT BELOW THIS LINE ###
+
+## Lock subsystem: prevent from running multiple instances
+nctl_subsys_lock
+nctl_check_ok 'FAIL TO RUN "%s" SUBSYSTEM EXCLUSIVELY\n' "$NCTL_SUBSYS_NAME"
+
+exit_handler()
+{
+	# Report end
+	nctl_end_msg
+
+	## Unlock subsystem
+	nctl_subsys_unlock ||
+		nctl_inc_rc nctl_rc
+
+	exit $nctl_rc
+}
+trap 'exit_handler 2>&1 |nctl_log_pipe' EXIT
+
+# Usage: repf <exe> ...
+repf()
+{
+	local exe="${1:?missing 1st argument to function \"$FUNCNAME\" (exe)}"
+	shift
+
+	# Skip not available or disabled targets
+	[ -x "$exe" ] || return 0
+
+	# Include logging output from subsystem
+	NCTL_LOG_STD=y NCTL_STD_FD=$NCTL_LOGFILE_FD "$exe" "$@" 2>&1 |\
+		nctl_log_pipe || nctl_inc_rc nctl_rc
+}
+declare -fr repf
+
+# Report start
+nctl_begin_msg
+
+## reipset
+repf "$REIPSET"
+
+## reiptables
+repf "$REIPTABLES"
+
+## retc
+repf "$RETC"
+
+exit $nctl_rc
