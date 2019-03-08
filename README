@@ -53,6 +53,11 @@ Current list of subprojects that are part of this superproject:
                   reiptables.
                   https://github.com/serhepopovych/retc
 
+  o repipe      - Helper to communicate with configuration database via
+                  HTTP API to fetch subscriber configuration (e.g. shaper)
+                  in specific format and convert it to XML-like netctl.
+                  https://github.com/serhepopovych/repipe
+
 To install projects system wide you might use following command sequence:
 -------------------------------------------------------------------------
 
@@ -76,30 +81,32 @@ directory used for system wide configuration installations:
 Subproject dependency schema:
 -----------------------------
 
-                          +-------------+
-                          | netctl-base |
-                          +------+------+
-                                 |
-          +----------------------+
-          |                      |
-    +-----+-----+          +-----+-----+         +----------+
-    | libusrxml |          |  libnctl  +---------+  netconf |
-    +-----+-----+          +-----+-----+         +----+-----+
-          |                      |                    |
-          |                +-----+-----+              |
-          |                | libreconf |              |
-          |                +-----+-----+              |
-          |                      |                    |
-    +-----+-----+          +-----+-----+              |
-    |    retc   +----------+  reipset  |              |
-    +-----+-----+          +-----+-----+              |
-          |                      |                    |
-          |                +-----+-----+              |
-          |                | reiptables|              |
-          |                +-----+-----+              |
-          |                      |                    |
-          +----------------------+--------------------+
-                                 |
-                           +-----+-----+
-                           |  netctl   |
-                           +-----------+
+                                +-------------+
+                                | netctl-base |
+                                +------+------+
+                                       |
+               +-----------------------+
+               v                       v
+         +-----+-----+           +-----+-----+         +----------+
+         | libusrxml |           |  libnctl  +-------->+  netconf |
+         +-----+-----+           +-----+-----+         +----+-----+
+               |                       |                    |
+       +-------+-------+               |                    |
+       v               |               v                    |
+ +-----+-----+         |         +-----+-----+              |
+ |   repipe  +<--------o---------+ libreconf |              |
+ +-----+-----+         |         +-----+-----+              |
+       |               v               v                    |
+       |         +-----+-----+   +-----+-----+              |
+       |         |   retc    +<--+  reipset  |              |
+       |         +-----+-----+   +-----+-----+              |
+       |               |               v                    |
+       |               |         +-----+-----+              |
+       |               |         | reiptables|              |
+       |               |         +-----+-----+              |
+       |               |               |                    |
+       +---------------+---------------+--------------------+
+                                       v
+                                 +-----+-----+
+                                 |  netctl   |
+                                 +-----------+

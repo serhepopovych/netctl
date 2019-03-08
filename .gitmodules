@@ -7,3 +7,6 @@
 [submodule ".subprojects/netconf"]
 	path = .subprojects/netconf
 	url = https://github.com/serhepopovych/netconf.git
+[submodule ".subprojects/repipe"]
+	path = .subprojects/repipe
+	url = https://github.com/serhepopovych/repipe
