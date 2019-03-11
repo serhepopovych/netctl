@@ -1,0 +1,153 @@
+#!/bin/bash
+
+# Re-exec itself as given user
+NCTL_RUNAS='reconfigure'
+
+# External tool dependencies, MUST always be defined,
+# even if empty (e.g.: declare -a crt1_request_tools_list=())
+declare -a crt1_request_tools_list=(
+	'logger'	# logger(1)
+)
+
+# Source startup code
+. @target@/netctl/lib/bash/crt1.sh
+
+# Source functions libraries
+. @target@/netctl/lib/bash/librtti.sh
+. @target@/netctl/lib/bash/libfile.sh
+. @target@/netctl/lib/bash/liblog.sh
+. @target@/netctl/lib/bash/libprocess.sh
+
+# Source reconfiguration library
+. @target@/netctl/lib/bash/libreconf.sh
+
+################################################################################
+
+## If not specified in config, set this to default
+
+[ -x "$REPIPE" ] || REPIPE="$NCTL_PREFIX/bin/repipe"
+[ -x "$REPF" ] || REPF="$NCTL_PREFIX/bin/repf"
+
+[ -n "$USR_XML" ] || USR_XML="$NCTL_PREFIX/etc/usr.xml"
+
+### DO NOT EDIT BELOW THIS LINE ###
+
+## Lock subsystem: prevent from running multiple instances
+nctl_subsys_lock
+nctl_check_ok 'FAIL TO RUN "%s" SUBSYSTEM EXCLUSIVELY\n' "$NCTL_SUBSYS_NAME"
+
+exit_handler()
+{
+	# Report end
+	nctl_end_msg
+
+	## Unlock subsystem
+	nctl_subsys_unlock ||
+		nctl_inc_rc nctl_rc
+
+	exit $nctl_rc
+}
+trap 'exit_handler 2>&1 |nctl_log_pipe' EXIT
+
+# Usage: log_msg <fmt> ...
+log_msg()
+{
+	local rc=$?
+	local fmt="${1:?missing 1st argument to function \"$FUNCNAME\" (fmt)}"
+	shift
+
+	## Log message using standard netctl logging facilities.
+	NCTL_LOG_STD=n \
+		nctl_log_msg "$fmt" "$@"
+
+	## Log message to standard error and syslog using logger(1)
+
+	# Always manually specify locations where we log!
+	# These vars might be overwritten by somewhere else in logging subsystem.
+
+	NCTL_LOG_ENABLE=y \
+	NCTL_LOG_PREFIX_NONE=y \
+	NCTL_LOG_STD=y NCTL_STD_FD=$NCTL_STDOUT \
+	NCTL_LOG_FILE=n \
+		nctl_log_msg "$fmt" "$@" |logger -st 'reconfigure'
+
+	return $rc
+}
+declare -fr log_msg
+
+# Report start
+nctl_begin_msg
+
+## repipe
+if [ -x "$REPIPE" ]; then
+	log_msg 'Starting repipe...\n'
+	"$REPIPE" ||
+		log_msg 'ERROR: pipes retrieved unsuccessfully\n' || exit
+	log_msg 'repipe is Ok\n'
+fi
+
+## repf
+if [ -x "$REPF" ]; then
+	log_msg 'Starting repf...\n'
+	"$REPF" ||
+		log_msg 'ERROR: repf runs unsuccessfuly\n' || exit
+	log_msg 'repf is Ok\n'
+fi
+
+## Print summary
+
+# zone counters
+declare -i zones_all=0
+declare -i zones_wo=0
+declare -i zones_lo=0
+
+# users counters
+declare -i users_wn=0
+
+# Usage: reconfigure__nctl_action_fentry <entry>
+reconfigure__nctl_action_fentry()
+{
+	local entry="$1"
+
+	# Count number of users and zones
+	[[ "$entry" =~ \<(user|zone)[[:space:]]+([^[:space:]]+)\> ]] || return
+
+	case "${BASH_REMATCH[1]}" in
+		'user')
+			case "${BASH_REMATCH[2]}" in
+				WN*)
+					# WN users
+					: $((users_wn++))
+					;;
+			esac
+			;;
+		'zone')
+			case "${BASH_REMATCH[2]}" in
+				'all')
+					# all
+					: $((zones_all++))
+					;;
+				'world')
+					# wo
+					: $((zones_wo++))
+					;;
+				'local')
+					# lo
+					: $((zones_lo++))
+					;;
+			esac
+			;;
+	esac
+	:
+}
+
+nctl_action_fentry='reconfigure__nctl_action_fentry' \
+	nctl_for_each_fentry "$USR_XML"
+
+log_msg '%u pipes( %u total, %u wo, %u lo ), %u users( %u wn ).\n' \
+	$((zones_all + zones_wo + zones_lo)) \
+	$zones_all $zones_wo $zones_lo \
+	$users_wn \
+	$users_wn
+
+exit $nctl_rc
