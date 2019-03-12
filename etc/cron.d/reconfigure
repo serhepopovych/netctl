@@ -1,0 +1,2 @@
+# Periodically reconfigure all services
+#05  04 * * * reconfigure sleep $(($$ \% 900)); @target@/netctl/bin/reconfigure >/dev/null 2>&1
