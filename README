@@ -64,24 +64,30 @@ To install projects system wide you might use following command sequence:
   $ cd /tmp
   $ git clone --recursive https://github.com/serhepopovych/netctl
   $ cd netctl
-  $ ./install.sh
+  $ sudo ./deploy.sh -d 'opt'
 
-If everything does fine netctl will be installed to '/netctl' and system
-wide configuration files to '/etc' and other locations. Unprivileged
-user 'reconfigure' may also be created as part of libreconf subproject
-installation process.
+If everything does fine netctl will be installed to '/opt/netctl' and
+system wide configuration files to '/etc' and other locations.
+Unprivileged user 'reconfigure' may also be created as part of libreconf
+subproject installation process.
 
-If you prefer to install netctl into different location and/or put
-system wide configuration files to non-root directory you may use DEST
-and ROOT environemnt variables to set netctl installation path and
-directory used for system wide configuration installations:
+If you want to install netctl for further packaging you may want to skip
+privileged parts like user creation and ownership changes during install
+with option -o as well as specify alternative root location:
 
-  $ DEST='/tmp/netctl-dest' ROOT='/tmp/netctl-root' ./install.sh
+  $ ./deploy.sh -r ./packages -d 'opt' -t 'opt' -b '' -o
+
+This will install everything to "packages" subdirectory under current path
+specifying path on target system (-t option) after installed from package.
 
 Subproject dependency schema:
 -----------------------------
 
                                 +-------------+
+                                |  installsh  |
+                                +------+------+
+                                       |
+                                +------+------+
                                 | netctl-base |
                                 +------+------+
                                        |
