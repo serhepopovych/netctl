@@ -7,4 +7,33 @@
 # $ROOT/etc/cron.d/reconfigure
 adj_rights '' 0644 "$ROOT/etc/cron.d/reconfigure"
 
+# Patch /netctl/lib/libusrxml.awk to not return "?" and other chars.
+sed -i "$DEST/netctl/lib/awk/libusrxml.awk" \
+    -e '/^\tval = usrxml__dyn_get_val(h, dyn, iflu);$/i\
+	# Hack to hide "?" sign from <if> tag when no interface in usrxml\
+	return "";\
+'
+
+# Patch /netctl/bin/users_xml2lst.awk, /netctl/bin/users_lst2xml.awk
+# and /netctl/bin/tc.awk to make users active regardless of <if> tag
+# resolved to existing interface or not.
+patch_type_cmp_inf()
+{
+	local func="${FUNCNAME:-patch_type_cmp_inf}"
+
+	local file="${1:?missing 1st argument to ${func}()}"
+
+	sed -i "$file" \
+	    -e '{N; /^\th = init_usrxml_parser(".\+");\?\s\+if (h < 0)$/!{P;D}}
+	        {N; /\t\texit 1;$/!{p;d}}
+		/.\+/a\
+\
+	# Hack to make <user> active regardles of <if> tag present in usrxml\
+	USRXML_types["user","cmp"] = USRXML_type_cmp_inf;'
+}
+
+patch_type_cmp_inf "$DEST/netctl/bin/tc.awk"
+patch_type_cmp_inf "$DEST/netctl/bin/users_xml2lst.awk"
+patch_type_cmp_inf "$DEST/netctl/bin/users_lst2xml.awk"
+
 return 0
