@@ -1,0 +1,10 @@
+#!/bin/sh -e
+
+# Requires: useradd(8), userdel(8), usermod(8)
+
+## Adjust filesystem ownership and permissions
+
+# $ROOT/etc/cron.d/reconfigure
+adj_rights '' 0644 "$ROOT/etc/cron.d/reconfigure"
+
+return 0
