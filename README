@@ -34,6 +34,11 @@ Current list of subprojects that are part of this superproject:
                   command line.
                   https://github.com/serhepopovych/netconf
 
+  o redhcp      - Helper to prepare /etc/ethers based on information from
+                  XML-like data handled by libusrxml, provide configuration
+                  for dnsmasq(8) and ip-unaddr.sh helper
+                  https://github.com/serhepopovych/redhcp
+
   o reipset     - Wrapper binary to manage IP sets used by iptables. Can
                   fetch configuration via rsync (including ssh tunneling),
                   local configuration files in ipset(8) format delta
@@ -48,9 +53,8 @@ Current list of subprojects that are part of this superproject:
                   https://github.com/serhepopovych/reiptables
 
   o retc        - Wrapper binary to manage traffic control facilities (e.g.
-                  apply shaper rules using tc-htb(8) and tc-pfifo(8).
-                  Uses libusrxml parsed data, depends on reipset and
-                  reiptables.
+                  apply shaper rules using tc-htb(8) and tc-pfifo(8)) based
+                  on XML-like data handled by libusrxml
                   https://github.com/serhepopovych/retc
 
   o repipe      - Helper to communicate with configuration database via
@@ -91,27 +95,34 @@ Subproject dependency schema:
                                 | netctl-base |
                                 +------+------+
                                        |
-               +-----------------------+
-               v                       v
-         +-----+-----+           +-----+-----+         +----------+
-         | libusrxml |           |  libnctl  +-------->+  netconf |
-         +-----+-----+           +-----+-----+         +----+-----+
-               |                       |                    |
-       +-------+-------+               |                    |
-       v               |               v                    |
- +-----+-----+         |         +-----+-----+              |
- |   repipe  +<--------o---------+ libreconf |              |
- +-----+-----+         |         +-----+-----+              |
-       |               v               v                    |
-       |         +-----+-----+   +-----+-----+              |
-       |         |   retc    +<--+  reipset  |              |
-       |         +-----+-----+   +-----+-----+              |
-       |               |               v                    |
-       |               |         +-----+-----+              |
-       |               |         | reiptables|              |
-       |               |         +-----+-----+              |
-       |               |               |                    |
-       +---------------+---------------+--------------------+
+                +----------------------+----------------------+
+                v                                             v
+          +-----+-----+                                 +-----+-----+
+          | libusrxml |                                 |  libnctl  |
+          +-----+-----+                                 +-----+-----+
+                |                                             |
+                |                                  +----------+----------+
+                |                                  v                     v
+                |                            +-----+-----+         +-----+-----+
+                |                            | libreconf |         |  netconf  |
+                |                            +-----+-----+         +-----+-----+
+                |                                  "                     |
+                |      +===========================+                     |
+                +--+   "                                                 |
+                   |   "                                                 |
+     +-------------+---------------+------------+----------------+       |
+     |             |   "           |            |                |       |
+     |   +=========|===+===========|============|===+            |       |
+     |   "         |   "           |            |   "            |       |
+     v   V         v   V           v            v   V            v       |
+ +---+---+---+ +---+---+---+ +-----+-----+  +---+---+---+  +-----+-----+ |
+ |   repipe  | |   redhcp  | | reiptables+<-|  reipset  |->+   retc    | |
+ +-----+-----+ +-----+-----+ +-----+-----+  +-----+-----+  +-----+-----+ |
+       |             |             |              |              |       |
+       |             |             |              |              |       |
+       |             |             |              |              |       |
+       +-------------+-------------+---+----------+--------------+-------+
+                                       |
                                        v
                                  +-----+-----+
                                  |  netctl   |

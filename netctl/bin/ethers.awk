@@ -1,0 +1,1 @@
+../../.subprojects/redhcp/netctl/bin/ethers.awk

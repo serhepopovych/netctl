@@ -1,0 +1,1 @@
+../../.subprojects/repipe/netctl/bin/pipe.awk

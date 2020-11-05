@@ -10,3 +10,6 @@
 [submodule ".subprojects/repipe"]
 	path = .subprojects/repipe
 	url = https://github.com/serhepopovych/repipe
+[submodule ".subprojects/redhcp"]
+	path = .subprojects/redhcp
+	url = https://github.com/serhepopovych/redhcp
