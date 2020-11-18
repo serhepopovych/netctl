@@ -7,4 +7,10 @@
 # $ROOT/etc/cron.d/reconfigure
 adj_rights '' 0644 "$ROOT/etc/cron.d/reconfigure"
 
+# Point usr.xml from redhcp and reiptables to retc
+for f in 'redhcp' 'reiptables'; do
+	ln -sf '../../../retc/data/usrxml/usr.xml' \
+	       "$DEST/netctl/etc/$f/data/usrxml/usr.xml"
+done
+
 return 0
